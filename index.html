@@ -1,46 +1,32 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ESP32-C3 BLE Controller</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32-C3 BLE LED Controller</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="card">
-    <h1>ESP32-C3 BLE Controller</h1>
 
-    <button id="connectBtn" class="btn primary">Connect</button>
-    <div id="status" class="status">Not connected</div>
+<h1>ESP32-C3 BLE Controller</h1>
 
-    <div id="controls" class="controls hidden">
-      <div class="row">
-        <div class="panel">
-          <h3>LED 1 (GPIO 2)</h3>
-          <button class="toggle btn green" data-cmd='{"led2":1}'>ON</button>
-          <button class="toggle btn red"   data-cmd='{"led2":0}'>OFF</button>
-          <label class="label">Brightness</label>
-          <input id="brightness" class="slider" type="range" min="0" max="255" value="0">
-          <div id="bval" class="small">0</div>
-        </div>
+<button id="connectBtn">CONNECT</button>
 
-        <div class="panel">
-          <h3>LED 2 (GPIO 20)</h3>
-          <button class="toggle btn green" data-cmd='{"led20":1}'>ON</button>
-          <button class="toggle btn red"   data-cmd='{"led20":0}'>OFF</button>
-        </div>
-
-        <div class="panel">
-          <h3>LED 3 (GPIO 21)</h3>
-          <button class="toggle btn green" data-cmd='{"led21":1}'>ON</button>
-          <button class="toggle btn red"   data-cmd='{"led21":0}'>OFF</button>
-        </div>
-      </div>
+<div id="controlPanel" style="display:none;">
+    <div class="led-control">
+        <button class="btn on" id="led2Btn">LED 1 ON</button>
+        <input type="range" id="led2Brightness" min="0" max="255" value="0">
     </div>
 
-    <footer class="foot">Connection LED on board: <strong>GPIO 10</strong></footer>
-  </div>
+    <div class="led-control">
+        <button class="btn on" id="led20Btn">LED 2 ON</button>
+    </div>
 
-  <script src="script.js"></script>
+    <div class="led-control">
+        <button class="btn on" id="led21Btn">LED 3 ON</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
