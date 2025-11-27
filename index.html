@@ -1,67 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bluetooth LED Controller</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLE LED Controller</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>ESP32-C3 Bluetooth Controller</h1>
+<h2>BLE LED Controller</h2>
 
-<button id="connectBtn">CONNECT</button>
+<button id="connectBtn">Connect</button>
 
-<div id="controlPanel" style="display:none;">
-    <button class="btn on" onclick="sendCommand('LED_ON')">LED ON</button>
-    <button class="btn off" onclick="sendCommand('LED_OFF')">LED OFF</button>
+<div id="controls" style="display:none;">
+    <button class="ledBtn" data-value="1">Turn ON</button>
+    <button class="ledBtn" data-value="0">Turn OFF</button>
 </div>
 
 <script>
-let device;
-let rxCharacteristic;
+let bleDevice;
+let bleServer;
+let writeChar;
 
-const SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
-const RX_UUID      = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";
+const SERVICE_UUID       = "12345678-1234-1234-1234-1234567890ab";
+const CHARACTERISTIC_UUID = "abcd1234-5678-90ab-cdef-1234567890ab";
 
-async function connectBluetooth() {
+document.getElementById("connectBtn").onclick = async () => {
     try {
-        device = await navigator.bluetooth.requestDevice({
+        console.log("Requesting device...");
+        bleDevice = await navigator.bluetooth.requestDevice({
             filters: [{ services: [SERVICE_UUID] }]
         });
 
-        device.addEventListener('gattserverdisconnected', () => {
-            alert('Device disconnected!');
-            document.getElementById("controlPanel").style.display = "none";
-            document.getElementById("connectBtn").textContent = "CONNECT";
-            document.getElementById("connectBtn").disabled = false;
-        });
+        console.log("Connecting...");
+        bleServer = await bleDevice.gatt.connect();
 
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService(SERVICE_UUID);
-        rxCharacteristic = await service.getCharacteristic(RX_UUID);
+        const service = await bleServer.getPrimaryService(SERVICE_UUID);
+        writeChar = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
-        document.getElementById("controlPanel").style.display = "block";
-        document.getElementById("connectBtn").textContent = "CONNECTED";
-        document.getElementById("connectBtn").disabled = true;
-        alert("Connected!");
+        document.getElementById("controls").style.display = "block";
+        console.log("Connected!");
+    } catch (e) {
+        console.error(e);
     }
-    catch (error) {
-        alert("Connection failed: " + error);
-    }
-}
+};
 
-async function sendCommand(cmd) {
-    if (!rxCharacteristic) return;
-    const encoder = new TextEncoder();
-    try {
-        await rxCharacteristic.writeValue(encoder.encode(cmd));
-    } catch(e) {
-        alert("Failed to send command: " + e);
-    }
-}
+document.querySelectorAll(".ledBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+        if (!writeChar) return;
 
-document.getElementById("connectBtn").addEventListener("click", connectBluetooth);
+        const value = parseInt(btn.dataset.value);
+        console.log("Sending:", value);
+
+        try {
+            await writeChar.writeValue(Uint8Array.from([value]));
+        } catch (e) {
+            console.error("Write error:", e);
+        }
+    });
+});
 </script>
 
 </body>
