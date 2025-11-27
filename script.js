@@ -1,84 +1,64 @@
-// script.js
-let device = null;
-let server = null;
-let writeChar = null;
+let device;
+let rxCharacteristic;
 
 const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-const CHAR_UUID    = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
-const connectBtn = document.getElementById('connectBtn');
-const statusEl = document.getElementById('status');
-const controls = document.getElementById('controls');
-const brightness = document.getElementById('brightness');
-const bval = document.getElementById('bval');
+async function connectBluetooth() {
+    try {
+        device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [SERVICE_UUID] }]
+        });
 
-// Utility: send JSON string to device using writeValueWithoutResponse
-async function sendJson(obj) {
-  if (!writeChar) {
-    console.warn('No characteristic to write to');
-    return;
-  }
-  const json = JSON.stringify(obj);
-  const encoder = new TextEncoder();
-  try {
-    // Use write without response for NimBLE compatibility on iOS
-    await writeChar.writeValueWithoutResponse(encoder.encode(json));
-    console.log('Sent:', json);
-  } catch (e) {
-    console.error('Write failed', e);
-  }
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        rxCharacteristic = await service.getCharacteristic(RX_UUID);
+
+        document.getElementById("controlPanel").style.display = "block";
+        alert("Connected!");
+    } catch (error) {
+        alert("Connection failed: " + error);
+    }
 }
 
-// Connect flow
-connectBtn.addEventListener('click', async () => {
-  try {
-    statusEl.textContent = 'Requesting device...';
-    device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [SERVICE_UUID]
-    });
+async function sendCommand(cmd) {
+    if (!rxCharacteristic) return;
+    const encoder = new TextEncoder();
+    await rxCharacteristic.writeValue(encoder.encode(cmd));
+}
 
-    statusEl.textContent = 'Connecting...';
-    server = await device.gatt.connect();
+// Button event listeners
+document.getElementById("connectBtn").addEventListener("click", connectBluetooth);
 
-    const service = await server.getPrimaryService(SERVICE_UUID);
-    writeChar = await service.getCharacteristic(CHAR_UUID);
-
-    // show controls
-    controls.classList.remove('hidden');
-    statusEl.textContent = 'Connected: ' + (device.name || 'Unknown');
-
-    // set up disconnect listener
-    device.addEventListener('gattserverdisconnected', () => {
-      statusEl.textContent = 'Disconnected';
-      controls.classList.add('hidden');
-      writeChar = null;
-      device = null;
-    });
-
-  } catch (err) {
-    console.error(err);
-    statusEl.textContent = 'Connection failed';
-    controls.classList.add('hidden');
-  }
+const led2Btn = document.getElementById("led2Btn");
+let led2On = false;
+led2Btn.addEventListener("click", () => {
+    led2On = !led2On;
+    led2Btn.textContent = led2On ? "LED 1 OFF" : "LED 1 ON";
+    led2Btn.className = led2On ? "btn off" : "btn on";
+    sendCommand(`{"led2":${led2On ? 1 : 0}}`);
 });
 
-// Attach button handlers
-document.querySelectorAll('.toggle').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const raw = btn.getAttribute('data-cmd');
-    try {
-      const obj = JSON.parse(raw);
-      await sendJson(obj);
-    } catch (e) {
-      console.error('Invalid JSON in button', e);
-    }
-  });
+const led20Btn = document.getElementById("led20Btn");
+let led20On = false;
+led20Btn.addEventListener("click", () => {
+    led20On = !led20On;
+    led20Btn.textContent = led20On ? "LED 2 OFF" : "LED 2 ON";
+    led20Btn.className = led20On ? "btn off" : "btn on";
+    sendCommand(`{"led20":${led20On ? 1 : 0}}`);
+});
+
+const led21Btn = document.getElementById("led21Btn");
+let led21On = false;
+led21Btn.addEventListener("click", () => {
+    led21On = !led21On;
+    led21Btn.textContent = led21On ? "LED 3 OFF" : "LED 3 ON";
+    led21Btn.className = led21On ? "btn off" : "btn on";
+    sendCommand(`{"led21":${led21On ? 1 : 0}}`);
 });
 
 // Brightness slider
-brightness.addEventListener('input', async (ev) => {
-  const v = parseInt(ev.target.value);
-  bval.textContent = v;
-  await sendJson({ brightness: v });
+const led2Brightness = document.getElementById("led2Brightness");
+led2Brightness.addEventListener("input", () => {
+    sendCommand(`{"brightness":${led2Brightness.value}}`);
 });
