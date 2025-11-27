@@ -1,65 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLE LED Controller</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ESP32-C3 BLE Controller</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="card">
+    <h1>ESP32-C3 BLE Controller</h1>
 
-<h2>BLE LED Controller</h2>
+    <button id="connectBtn" class="btn primary">Connect</button>
+    <div id="status" class="status">Not connected</div>
 
-<button id="connectBtn">Connect</button>
+    <div id="controls" class="controls hidden">
+      <div class="row">
+        <div class="panel">
+          <h3>LED 1 (GPIO 2)</h3>
+          <button class="toggle btn green" data-cmd='{"led2":1}'>ON</button>
+          <button class="toggle btn red"   data-cmd='{"led2":0}'>OFF</button>
+          <label class="label">Brightness</label>
+          <input id="brightness" class="slider" type="range" min="0" max="255" value="0">
+          <div id="bval" class="small">0</div>
+        </div>
 
-<div id="controls" style="display:none;">
-    <button class="ledBtn" data-value="1">Turn ON</button>
-    <button class="ledBtn" data-value="0">Turn OFF</button>
-</div>
+        <div class="panel">
+          <h3>LED 2 (GPIO 20)</h3>
+          <button class="toggle btn green" data-cmd='{"led20":1}'>ON</button>
+          <button class="toggle btn red"   data-cmd='{"led20":0}'>OFF</button>
+        </div>
 
-<script>
-let bleDevice;
-let bleServer;
-let writeChar;
+        <div class="panel">
+          <h3>LED 3 (GPIO 21)</h3>
+          <button class="toggle btn green" data-cmd='{"led21":1}'>ON</button>
+          <button class="toggle btn red"   data-cmd='{"led21":0}'>OFF</button>
+        </div>
+      </div>
+    </div>
 
-const SERVICE_UUID       = "12345678-1234-1234-1234-1234567890ab";
-const CHARACTERISTIC_UUID = "abcd1234-5678-90ab-cdef-1234567890ab";
+    <footer class="foot">Connection LED on board: <strong>GPIO 10</strong></footer>
+  </div>
 
-document.getElementById("connectBtn").onclick = async () => {
-    try {
-        console.log("Requesting device...");
-        bleDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [SERVICE_UUID] }]
-        });
-
-        console.log("Connecting...");
-        bleServer = await bleDevice.gatt.connect();
-
-        const service = await bleServer.getPrimaryService(SERVICE_UUID);
-        writeChar = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-        document.getElementById("controls").style.display = "block";
-        console.log("Connected!");
-    } catch (e) {
-        console.error(e);
-    }
-};
-
-document.querySelectorAll(".ledBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-        if (!writeChar) return;
-
-        const value = parseInt(btn.dataset.value);
-        console.log("Sending:", value);
-
-        try {
-            await writeChar.writeValue(Uint8Array.from([value]));
-        } catch (e) {
-            console.error("Write error:", e);
-        }
-    });
-});
-</script>
-
+  <script src="script.js"></script>
 </body>
 </html>
